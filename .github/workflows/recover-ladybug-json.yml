@@ -1,0 +1,60 @@
+# Recover the unmodified upstream Ladybug JSON extension for every platform from
+# an archived upstream extension-server image, and upload it as a workflow
+# artifact for review. Publishing to a release is a separate, manual step.
+#
+# extension.ladybugdb.com no longer hosts v0.16.0, but upstream publishes the
+# whole server as ghcr.io/ladybugdb/extension-repo, and image versions built
+# before the removal still contain it.
+name: Recover Ladybug JSON extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Upstream extension-server image, pinned by digest
+        default: ghcr.io/ladybugdb/extension-repo@sha256:cc54fa4e655e26eb508740c00c6485efc5fc46a8d50b524a0e8c6b2c3a0f5664
+      version:
+        description: Ladybug version
+        default: "0.16.0"
+
+permissions:
+  contents: read
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract the JSON extension for every platform
+        env:
+          IMAGE: ${{ inputs.image }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          docker pull --platform linux/amd64 "$IMAGE"
+          cid="$(docker create --platform linux/amd64 "$IMAGE")"
+          docker cp "$cid:/usr/share/nginx/html/v$VERSION" upstream
+          docker rm "$cid" >/dev/null
+          mkdir out
+          for f in upstream/*/json/*; do
+            platform="$(basename "$(dirname "$(dirname "$f")")")"
+            cp "$f" "out/$(basename "$f" .lbug_extension)-$platform.lbug_extension"
+          done
+          cd out
+          sha256sum -- * | tee SHA256SUMS
+          ls -l
+
+      # Two files we already hold from the original download site must match
+      # byte for byte; otherwise this image is not the upstream release we want.
+      - name: Cross-check against known upstream originals
+        working-directory: out
+        run: |
+          set -euo pipefail
+          grep -qx '0767a3326207849596669810166cf10f843b6985ebbfcd917a05b8e8359ee028  libjson-linux_amd64.lbug_extension' SHA256SUMS
+          grep -qx '555ede48e4459e311bc4c8215e9b9f51412d6950505c6e8a788984fd63499c92  libjson-osx_arm64.lbug_extension' SHA256SUMS
+          echo "cross-check passed"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ladybug-json-${{ inputs.version }}
+          path: out/
+          if-no-files-found: error
