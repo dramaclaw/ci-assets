@@ -11,7 +11,7 @@ upstream binary, and CI verifies its SHA-256 before using it.
 
 | Asset | Version | Platform | Release tag | Notices |
 |---|---|---|---|---|
-| Ladybug JSON extension | 0.16.0 | linux_amd64 | `ladybug-json-0.16.0` | [`ladybug-json/0.16.0`](ladybug-json/0.16.0) |
+| Ladybug JSON extension | 0.16.0 | linux_amd64, linux_arm64, osx_amd64, osx_arm64, win_amd64 | `ladybug-json-0.16.0` | [`ladybug-json/0.16.0`](ladybug-json/0.16.0) |
 
 ### Ladybug JSON extension 0.16.0
 
@@ -19,6 +19,12 @@ upstream binary, and CI verifies its SHA-256 before using it.
 - SHA-256: `0767a3326207849596669810166cf10f843b6985ebbfcd917a05b8e8359ee028`
 - Origin: downloaded on 2026-08-21 from
   `https://extension.ladybugdb.com/v0.16.0/linux_amd64/json/libjson.lbug_extension`
+- Other platforms: `libjson-{linux_arm64,osx_amd64,osx_arm64,win_amd64}.lbug_extension`,
+  recovered on 2026-10-19 by [`recover-ladybug-json.yml`](.github/workflows/recover-ladybug-json.yml)
+  from the upstream image `ghcr.io/ladybugdb/extension-repo@sha256:cc54fa4e655e26eb508740c00c6485efc5fc46a8d50b524a0e8c6b2c3a0f5664`,
+  built before v0.16.0 was removed. The same run reproduced the linux_amd64 file
+  byte for byte. All checksums are in
+  [`ladybug-json/0.16.0/SHA256SUMS`](ladybug-json/0.16.0/SHA256SUMS).
 - License: MIT. It statically links yyjson, also MIT. Both notices are in
   [`ladybug-json/0.16.0/LICENSE.txt`](ladybug-json/0.16.0/LICENSE.txt).
 
